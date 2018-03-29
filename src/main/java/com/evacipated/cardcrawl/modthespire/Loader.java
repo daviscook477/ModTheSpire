@@ -1,5 +1,7 @@
 package com.evacipated.cardcrawl.modthespire;
 
+import com.evacipated.cardcrawl.modthespire.common.ModTheSpire;
+import com.evacipated.cardcrawl.modthespire.event.EventRegistry;
 import com.evacipated.cardcrawl.modthespire.lib.SpireConfig;
 import javassist.ClassPool;
 import javassist.CtClass;
@@ -185,6 +187,12 @@ public class Loader {
                 Patcher.finalizePatches(loader);
                 Patcher.compilePatches(loader, ctClasses);
 
+                // Find and register events
+                System.out.println("Finding events...");
+                EventRegistry.registerEvents(loader, pool, EventRegistry.findEvents(MODINFOS));
+                EventRegistry.finalizeEvents(loader);
+                ModTheSpire.EVENT_BUS.setupListeners(EventRegistry.events);
+                
                 System.out.printf("Patching enums...");
                 Patcher.patchEnums(loader, Loader.class.getResource(Loader.COREPATCHES_JAR));
                 // Patch SpireEnums from mods
