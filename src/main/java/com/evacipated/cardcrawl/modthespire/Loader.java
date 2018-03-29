@@ -188,14 +188,16 @@ public class Loader {
                 Patcher.compilePatches(loader, ctClasses);
 
                 // Find and register events
-                System.out.println("Finding events...");
+                System.out.printf("Finding events...");
                 EventRegistry.registerEvents(loader, pool, EventRegistry.findEvents(MODINFOS));
                 EventRegistry.finalizeEvents(loader);
                 ModTheSpire.EVENT_BUS.setupListeners(EventRegistry.events);
+                System.out.println("Done.");
                 
                 // Find and register automatic event handlers
-                System.out.println("Registering event handlers...");
+                System.out.printf("Registering event handlers...");
                 EventRegistry.registerEventHandlers(loader, pool, EventRegistry.findEventHandlers(MODINFOS));
+                System.out.println("Done.");
                 
                 System.out.printf("Patching enums...");
                 Patcher.patchEnums(loader, Loader.class.getResource(Loader.COREPATCHES_JAR));

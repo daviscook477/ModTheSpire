@@ -152,13 +152,13 @@ public class EventBus {
 		}
 	}
 	
-	public boolean post(Event event) {
+	public Event post(Event event) {
 		try {
 			event.getSubscribers().invokeAll(event);
 		} catch (EventProcessingException e) {
-			// TODO: log relevant info relevant to event call exception
+			System.err.println("Error processing event: " + event.getClass().getName() + " contents: (" + event.toString() + "), exception: " + e.toString());
 		}
-		return event.isCancelled();
+		return event;
 	}
 	
 }
