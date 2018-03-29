@@ -11,7 +11,7 @@ import com.evacipated.cardcrawl.modthespire.event.Event;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EventHandler {
 	int priority() default Priority.DEFAULT;
-	boolean receiveIfCancelled() default Event.DEFAULT_CANCELLED;
+	boolean receiveIfCanceled() default Event.DEFAULT_CANCELED;
 	
 	/**
 	 * higher priority is indicated by lower numbers

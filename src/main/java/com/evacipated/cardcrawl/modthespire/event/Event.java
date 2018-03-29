@@ -5,7 +5,7 @@ package com.evacipated.cardcrawl.modthespire.event;
  */
 public class Event {
 
-	public static final boolean DEFAULT_CANCELLED = false;
+	public static final boolean DEFAULT_CANCELED = false;
 	
 	public static class EventInfo {
 		
@@ -19,7 +19,7 @@ public class Event {
 	private boolean isCancelled;
 	
 	public Event() {
-		this(DEFAULT_CANCELLED);
+		this(DEFAULT_CANCELED);
 	}
 	
 	public Event(boolean isCancelled) {
