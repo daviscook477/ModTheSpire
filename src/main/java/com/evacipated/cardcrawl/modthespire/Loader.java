@@ -193,6 +193,10 @@ public class Loader {
                 EventRegistry.finalizeEvents(loader);
                 ModTheSpire.EVENT_BUS.setupListeners(EventRegistry.events);
                 
+                // Find and register automatic event handlers
+                System.out.println("Registering event handlers...");
+                EventRegistry.registerEventHandlers(loader, pool, EventRegistry.findEventHandlers(MODINFOS));
+                
                 System.out.printf("Patching enums...");
                 Patcher.patchEnums(loader, Loader.class.getResource(Loader.COREPATCHES_JAR));
                 // Patch SpireEnums from mods
@@ -266,14 +270,28 @@ public class Loader {
 
     private static void findGameVersion()
     {
+    	URLClassLoader tmpLoader = null;
         try {
-            URLClassLoader tmpLoader = new URLClassLoader(new URL[]{new File(STS_JAR).toURI().toURL()});
+            tmpLoader = new URLClassLoader(new URL[]{new File(STS_JAR).toURI().toURL()});
             InputStream in = tmpLoader.getResourceAsStream("com/megacrit/cardcrawl/core/CardCrawlGame.class");
             ClassReader classReader = new ClassReader(in);
 
             classReader.accept(new GameVersionFinder(), 0);
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+        	closeURLClassLoader(tmpLoader);
+        }
+    }
+    
+    
+    private static void closeURLClassLoader(URLClassLoader loader) {
+        try {
+            if (loader != null) {
+            	loader.close();
+            }
+        } catch (IOException e) {
+            System.out.println("Exception during writer.close(), BufferedWriter may be leaked. " + e.toString());
         }
     }
 
@@ -413,7 +431,6 @@ public class Loader {
 
     private static int countSuperClasses(CtClass cls)
     {
-        String name = cls.getName();
         int count = 0;
 
         while (cls != null) {

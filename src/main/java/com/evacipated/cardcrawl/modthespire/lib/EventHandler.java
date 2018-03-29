@@ -10,8 +10,11 @@ import com.evacipated.cardcrawl.modthespire.event.Event;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EventHandler {
+	public static final boolean DEFAULT_AUTOMATIC = true;
+	
 	int priority() default Priority.DEFAULT;
 	boolean receiveIfCanceled() default Event.DEFAULT_CANCELED;
+	boolean automatic() default DEFAULT_AUTOMATIC;
 	
 	/**
 	 * higher priority is indicated by lower numbers

@@ -2,7 +2,12 @@ package com.evacipated.cardcrawl.modthespire;
 
 public class MissingDependencyException extends Exception
 {
-    public ModInfo modInfo;
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = -5041305624904298427L;
+	
+	public ModInfo modInfo;
     public String dependency;
 
     public MissingDependencyException(ModInfo modInfo, String dependency)

@@ -3,14 +3,12 @@ package com.evacipated.cardcrawl.modthespire.event;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.evacipated.cardcrawl.modthespire.ReflectionHelper;
 import com.evacipated.cardcrawl.modthespire.lib.EventHandler;
 
 public class EventBus {
@@ -27,38 +25,10 @@ public class EventBus {
 		}
 	}
 	
-	public Method[] getStaticMethods(Method[] allMethods, boolean getStatic) {
-		List<Method> matchedMethods = new ArrayList<>();
-		for (int i = 0; i< allMethods.length; i++) {
-			Method curr = allMethods[i];
-			if (Modifier.isStatic(curr.getModifiers()) == getStatic) {
-				matchedMethods.add(curr);
-			}
-		}
-		Method[] retArr = new Method[matchedMethods.size()];
-		return matchedMethods.toArray(retArr);
-	}
-	
-	/**
-	 * register all static methods on clazz
-	 */
-	public void register(Class clazz) {
-		Method[] methods = clazz.getMethods();
+	private Map<String, Invocable> registerMethods(Object object, Method[] methods, boolean ignoreAutomatic) throws EventRegistrationException {
+		Map<String, Invocable> retMap = new HashMap<>();
 		
-		// get static methods
-		Method[] validMethods = getStaticMethods(methods, true);
-	}
-	
-	/**
-	 * register all non static methods on object
-	 */
-	public void register(Object object) throws EventRegistrationException {
-		Method[] methods = object.getClass().getMethods();
-		
-		// get non static methods
-		Method[] validMethods = getStaticMethods(methods, false);
-		
-		for (Method method : validMethods) {
+		for (Method method : methods) {
 			Class<?>[] parameters = method.getParameterTypes();
 			
 			// validate parameter size
@@ -83,11 +53,49 @@ public class EventBus {
 				throw new EventRegistrationException("the parameter to an event method must be a subclass of Event");
 			}
 			
-			register(parameters[0].asSubclass(Event.class), object, method);
+			Invocable invocable = register(parameters[0].asSubclass(Event.class), object, method, ignoreAutomatic);
+			
+			retMap.put(method.getName(), invocable);
 		}
+		
+		return retMap;
 	}
 	
-	public void register(Class<? extends Event> eventType, Object owner, Method method) throws EventRegistrationException {
+	/**
+	 * register all static methods on clazz
+	 */
+	public Map<String, Invocable> register(Class<?> clazz) throws EventRegistrationException {
+		return this.register(clazz, true);
+	}
+	
+	public Map<String, Invocable> register(Class<?> clazz, boolean ignoreAutomatic) throws EventRegistrationException {
+		Method[] methods = clazz.getMethods();
+		
+		// get static methods
+		Method[] validMethods = ReflectionHelper.getStaticMethods(methods, true);
+		
+		// get methods with proper annotation
+		Method[] annotatedMethods = ReflectionHelper.getAnnotatedMethods(validMethods, EventHandler.class);
+		
+		return registerMethods(clazz, annotatedMethods, ignoreAutomatic);
+	}
+	
+	/**
+	 * register all non static methods on object
+	 */
+	public Map<String, Invocable> register(Object object) throws EventRegistrationException {
+		Method[] methods = object.getClass().getMethods();
+		
+		// get non static methods
+		Method[] validMethods = ReflectionHelper.getStaticMethods(methods, false);
+		
+		// get methods with proper annotation
+		Method[] annotatedMethods = ReflectionHelper.getAnnotatedMethods(validMethods, EventHandler.class);
+		
+		return registerMethods(object, annotatedMethods, true);
+	}
+	
+	public Invocable register(Class<? extends Event> eventType, Object owner, Method method, boolean ignoreAutomatic) throws EventRegistrationException {
 		EventListener listener = listeners.get(eventType);
 		
 		// checks to make sure there aren't problems in event registration
@@ -100,6 +108,8 @@ public class EventBus {
 		EventHandler annotation = method.getAnnotation(EventHandler.class);
 		
 		if (annotation == null) throw new EventRegistrationException("method provided for registered event must have @EventHandler annotation provided, " + method.getName() + " did not");
+		
+		if (!annotation.automatic() && !ignoreAutomatic) return null;
 		
 		// get annotated properties
 		int priority = annotation.priority();
@@ -124,6 +134,15 @@ public class EventBus {
 		};
 		
 		listener.addSubscriber(toInvoke, priority);
+		
+		return toInvoke;
+	}
+	
+	public void unregister(Invocable invocable) {
+		Iterator<EventListener> iter = listeners.values().iterator();
+		while (iter.hasNext()) {
+			iter.next().removeSubscriber(invocable);
+		}
 	}
 	
 	public void unregister(Object object) {

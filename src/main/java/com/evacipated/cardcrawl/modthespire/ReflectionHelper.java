@@ -1,7 +1,11 @@
 package com.evacipated.cardcrawl.modthespire;
 
 import sun.reflect.*;
+
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ReflectionHelper {
     private static final String MODIFIERS_FIELD = "modifiers";
@@ -29,4 +33,28 @@ public class ReflectionHelper {
         );
         fa.set(null, value);
     }
+    
+	public static Method[] getStaticMethods(Method[] allMethods, boolean getStatic) {
+		List<Method> matchedMethods = new ArrayList<>();
+		for (int i = 0; i< allMethods.length; i++) {
+			Method curr = allMethods[i];
+			if (Modifier.isStatic(curr.getModifiers()) == getStatic) {
+				matchedMethods.add(curr);
+			}
+		}
+		Method[] retArr = new Method[matchedMethods.size()];
+		return matchedMethods.toArray(retArr);
+	}
+	
+	public static Method[] getAnnotatedMethods(Method[] allMethods, Class<? extends Annotation> clazz) {
+		List<Method> matchedMethods = new ArrayList<>();
+		for (int i = 0; i< allMethods.length; i++) {
+			Method curr = allMethods[i];
+			if (curr.isAnnotationPresent(clazz)) {
+				matchedMethods.add(curr);
+			}
+		}
+		Method[] retArr = new Method[matchedMethods.size()];
+		return matchedMethods.toArray(retArr);
+	}
 }
