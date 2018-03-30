@@ -1,5 +1,7 @@
 package com.evacipated.cardcrawl.modthespire.event;
 
+import com.evacipated.cardcrawl.modthespire.lib.Event;
+
 public class EventProcessingException extends Exception {
 
 	/**
@@ -17,6 +19,13 @@ public class EventProcessingException extends Exception {
 		this.owner = owner;
 		this.failedEvent = failedEvent;
 		this.expectedType = expectedType;
+	}
+	
+	@Override
+	public String toString() {
+		originalException.printStackTrace();
+		return originalException.getClass().getName() + ": " + originalException.toString() + ", owner: " + 
+				owner + ", event: " + failedEvent.toString() + ", expected type: " + expectedType.getName(); 
 	}
 	
 }

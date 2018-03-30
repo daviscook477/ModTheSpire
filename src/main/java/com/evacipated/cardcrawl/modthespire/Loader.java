@@ -1,7 +1,7 @@
 package com.evacipated.cardcrawl.modthespire;
 
-import com.evacipated.cardcrawl.modthespire.common.ModTheSpire;
 import com.evacipated.cardcrawl.modthespire.event.EventRegistry;
+import com.evacipated.cardcrawl.modthespire.lib.ModTheSpire;
 import com.evacipated.cardcrawl.modthespire.lib.SpireConfig;
 import javassist.ClassPool;
 import javassist.CtClass;

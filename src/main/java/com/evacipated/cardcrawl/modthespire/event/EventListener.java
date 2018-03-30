@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import com.evacipated.cardcrawl.modthespire.lib.Event;
+
 public class EventListener {
 
 	private Map<Integer, Set<Invocable>> subscribers;

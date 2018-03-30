@@ -1,4 +1,6 @@
-package com.evacipated.cardcrawl.modthespire.event;
+package com.evacipated.cardcrawl.modthespire.lib;
+
+import com.evacipated.cardcrawl.modthespire.event.EventListener;
 
 /**
  * superclass of all events
@@ -6,15 +8,7 @@ package com.evacipated.cardcrawl.modthespire.event;
 public class Event {
 
 	public static final boolean DEFAULT_CANCELED = false;
-	
-	public static class EventInfo {
-		
-		public void setupEvent() {};
-		
-	}
-	
-	public static EventInfo eventInfo = new EventInfo();
-	
+
 	private EventListener subscribers;
 	private boolean isCancelled;
 	
@@ -24,6 +18,8 @@ public class Event {
 	
 	public Event(boolean isCancelled) {
 		this.isCancelled = isCancelled;
+		
+		subscribers = ModTheSpire.EVENT_BUS.getListener(this.getClass());
 	}
 	
 	public boolean isCancelled() {

@@ -1,5 +1,7 @@
 package com.evacipated.cardcrawl.modthespire.event;
 
+import com.evacipated.cardcrawl.modthespire.lib.Event;
+
 public abstract class Invocable {
 
 	private Object parent;

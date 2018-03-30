@@ -1,4 +1,4 @@
-package com.evacipated.cardcrawl.modthespire.common;
+package com.evacipated.cardcrawl.modthespire.lib;
 
 import com.evacipated.cardcrawl.modthespire.event.EventBus;
 

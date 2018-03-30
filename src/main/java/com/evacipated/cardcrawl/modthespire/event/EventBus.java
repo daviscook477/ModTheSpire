@@ -8,7 +8,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.evacipated.cardcrawl.modthespire.Loader;
 import com.evacipated.cardcrawl.modthespire.ReflectionHelper;
+import com.evacipated.cardcrawl.modthespire.lib.Event;
 import com.evacipated.cardcrawl.modthespire.lib.EventHandler;
 
 public class EventBus {
@@ -23,6 +25,10 @@ public class EventBus {
 		for (Class<? extends Event> event : events) {
 			listeners.put(event, new EventListener());
 		}
+	}
+	
+	public EventListener getListener(Class<? extends Event> clazz) {
+		return listeners.get(clazz);
 	}
 	
 	private Map<String, Invocable> registerMethods(Object object, Method[] methods, boolean ignoreAutomatic) throws EventRegistrationException {
@@ -61,6 +67,14 @@ public class EventBus {
 		return retMap;
 	}
 	
+	public Map<String, Invocable> registerQuietly(Class<?> clazz) {
+		try {
+			return register(clazz);
+		} catch (EventRegistrationException e) {
+			return null;
+		}
+	}
+	
 	/**
 	 * register all static methods on clazz
 	 */
@@ -78,6 +92,15 @@ public class EventBus {
 		Method[] annotatedMethods = ReflectionHelper.getAnnotatedMethods(validMethods, EventHandler.class);
 		
 		return registerMethods(clazz, annotatedMethods, ignoreAutomatic);
+	}
+	
+	
+	public Map<String, Invocable> registerQuietly(Object object) {
+		try {
+			return register(object);
+		} catch (EventRegistrationException e) {
+			return null;
+		}
 	}
 	
 	/**
@@ -99,7 +122,7 @@ public class EventBus {
 		EventListener listener = listeners.get(eventType);
 		
 		// checks to make sure there aren't problems in event registration
-		if (Modifier.isStatic(method.getModifiers()) && owner != null) throw new EventRegistrationException("static event methods cannot be registered to an owner, provided owner was: " + owner.getClass().getName());
+		if (Modifier.isStatic(method.getModifiers()) && owner != null && !(owner instanceof Class)) throw new EventRegistrationException("static event methods cannot be registered to an owner, provided owner was: " + owner.getClass().getName());
 		
 		if (!Modifier.isStatic(method.getModifiers()) && owner == null) throw new EventRegistrationException("non static event methods must be registered to an owner, provided owner was: null");
 		
@@ -111,6 +134,10 @@ public class EventBus {
 		
 		if (!annotation.automatic() && !ignoreAutomatic) return null;
 		
+		if (Loader.DEBUG) {
+			System.out.println("regstering handler for method: " + method.getName() + " on owner: " + owner.getClass().getName());
+		}
+		
 		// get annotated properties
 		int priority = annotation.priority();
 		boolean receiveIfCanceled = annotation.receiveIfCanceled();
@@ -120,7 +147,11 @@ public class EventBus {
 			@Override
 			public void invoke(Event event) throws EventProcessingException {
 				try {
-					method.invoke(owner, event);
+					if (owner instanceof Class) {
+						method.invoke(null, event);
+					} else {
+						method.invoke(owner, event);
+					}
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 					throw new EventProcessingException(e, owner, event, eventType);
 				}
@@ -153,6 +184,7 @@ public class EventBus {
 	}
 	
 	public Event post(Event event) {
+		System.out.println("firing event: " + event.getClass().getName());
 		try {
 			event.getSubscribers().invokeAll(event);
 		} catch (EventProcessingException e) {

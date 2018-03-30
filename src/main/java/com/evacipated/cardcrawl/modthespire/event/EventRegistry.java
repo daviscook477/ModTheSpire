@@ -1,7 +1,6 @@
 package com.evacipated.cardcrawl.modthespire.event;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -17,11 +16,11 @@ import org.scannotation.AnnotationDB;
 
 import com.evacipated.cardcrawl.modthespire.Loader;
 import com.evacipated.cardcrawl.modthespire.ModInfo;
-import com.evacipated.cardcrawl.modthespire.common.ModTheSpire;
-import com.evacipated.cardcrawl.modthespire.event.Event.EventInfo;
 import com.evacipated.cardcrawl.modthespire.filters.Finder;
 import com.evacipated.cardcrawl.modthespire.filters.SuperClassNameFilter;
+import com.evacipated.cardcrawl.modthespire.lib.Event;
 import com.evacipated.cardcrawl.modthespire.lib.EventHandler;
+import com.evacipated.cardcrawl.modthespire.lib.ModTheSpire;
 
 import javassist.CannotCompileException;
 import javassist.ClassPool;
@@ -34,7 +33,7 @@ public class EventRegistry {
 	private static class EventFilter extends SuperClassNameFilter {
 		
 		public EventFilter() {
-			super("com.evaciptaed.cardcrawl.modthespire.event.Event");
+			super("com.evacipated.cardcrawl.modthespire.lib.Event");
 		}
 		
 	}
@@ -73,19 +72,23 @@ public class EventRegistry {
 		return eventHandlerSetList;
 	}
 	
-	public static void registerEventHandlers(ClassLoader loader, ClassPool pool, List<Iterable<String>> classNames) throws NotFoundException, EventRegistrationException {
+	public static void registerEventHandlers(ClassLoader loader, ClassPool pool, List<Iterable<String>> classNames) throws NotFoundException, EventRegistrationException, ClassNotFoundException, CannotCompileException {
 		for (Iterable<String> iter : classNames) {
 			registerEventHandlers(loader, pool, iter);
 		}
 	}
 	
-	public static boolean registerEventHandlers(ClassLoader loader, ClassPool pool, Iterable<String> classNames) throws NotFoundException, EventRegistrationException {
+	public static boolean registerEventHandlers(ClassLoader loader, ClassPool pool, Iterable<String> classNames) throws NotFoundException, EventRegistrationException, ClassNotFoundException, CannotCompileException {
 		if (classNames == null) return false;
 		
 		for (String className : classNames) {
 			CtClass ctClass = pool.get(className);
-			Class<?> clazz = ctClass.getClass();
+			Class<?> clazz = loader.loadClass(ctClass.getName());
 			
+			if (Loader.DEBUG) {
+				System.out.println();
+				System.out.println("registering event handlers for class: " + clazz.getName());
+			}
 			ModTheSpire.EVENT_BUS.register(clazz, false);
 		}
 		
@@ -116,19 +119,20 @@ public class EventRegistry {
 		return eventSetList;
 	}
 	
-	public static void registerEvents(ClassLoader loader, ClassPool pool, List<Iterable<String>> classNames) throws NotFoundException, CannotCompileException {
+	public static void registerEvents(ClassLoader loader, ClassPool pool, List<Iterable<String>> classNames) throws NotFoundException, CannotCompileException, ClassNotFoundException {
 		for (Iterable<String> iter : classNames) {
 			registerEvents(loader, pool, iter);
 		}
 	}
 	
-	public static boolean registerEvents(ClassLoader loader, ClassPool pool, Iterable<String> classNames) throws NotFoundException, CannotCompileException {
+	public static boolean registerEvents(ClassLoader loader, ClassPool pool, Iterable<String> classNames) throws NotFoundException, CannotCompileException, ClassNotFoundException {
 		if (classNames == null) return false;
 		
 		for (String className : classNames) {
 			CtClass ctEventClass = pool.get(className);
-			if (Event.class.isAssignableFrom(ctEventClass.getClass())) {
-				events.add(ctEventClass.getClass().asSubclass(Event.class));
+			Class<?> eventClass = ctEventClass.toClass();
+			if (Event.class.isAssignableFrom(eventClass)) {
+				events.add(eventClass.asSubclass(Event.class));
 			} else {
 				throw new IllegalArgumentException("registerEvents must be passed ONLY classes that are subclasses of Event: " + className + " was not.");
 			}
@@ -149,9 +153,6 @@ public class EventRegistry {
 			if (Loader.DEBUG) {
 				debugPrint(clazz);
 			}
-			Field eventInfoField = clazz.getField("eventInfo");
-			EventInfo eventInfo = (EventInfo) eventInfoField.get(null);
-			eventInfo.setupEvent();
 		}
 	}
 	
